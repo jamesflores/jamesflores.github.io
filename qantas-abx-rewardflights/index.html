@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>✈️ Albury Qantas Reward Flights Viewer</title>
+<!-- Bootstrap CSS -->
+<link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet"/>
+<style>
+    body { 
+        background-color: #1c1c1c; /* Dark shade, not full black */
+        color: #ffffff; /* Brighter white for text */
+        margin: 25px;
+    }
+    a { color: #9AD0EC; }
+    .footer { 
+        text-align: center;
+    }
+
+.table th, .table td { color: #ffffff; }</style></head>
+<body>
+<div class="container mt-4">
+<h1>✈️ Albury Qantas Reward Flights Viewer</h1>
+<div class="row mb-3">
+<div class="col-md-4">
+<label for="monthPicker">Select Month:</label>
+<input class="form-control" id="monthPicker" onchange="updateMonth()" type="month"/>
+</div>
+</div>
+<ul class="nav nav-tabs" id="flightDataTabs">
+<li class="nav-item">
+<a class="nav-link active" data-id="ABX_to_SYD_BNE_MEL" onclick="updateTab('ABX_to_SYD_BNE_MEL')">Flights from ABX</a>
+</li>
+<li class="nav-item">
+<a class="nav-link" data-id="TO_ABX" onclick="updateTab('TO_ABX')">Flights to ABX</a>
+</li>
+</ul>
+<div id="flightData">
+<!-- Flight data tables will be populated here -->
+</div>
+</div>
+<!-- Bootstrap and jQuery scripts -->
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.0.5/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script>
+        let data = {}; // Initialize the data object with routes
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set the initial month in the month picker
+            const monthPicker = document.getElementById('monthPicker');
+            const currentDate = new Date();
+            monthPicker.value = currentDate.toISOString().substr(0, 7);
+
+            // Load initial data for "Flights from ABX" when the page loads
+            updateTab('ABX_to_SYD_BNE_MEL');
+        });
+
+        function updateTab(routeId) {
+            const tabLinks = document.querySelectorAll('#flightDataTabs .nav-link');
+            tabLinks.forEach(link => link.classList.remove('active'));
+            const activeTab = document.querySelector(`#flightDataTabs .nav-link[data-id="${routeId}"]`);
+            activeTab.classList.add('active');
+
+            if (routeId === 'ABX_to_SYD_BNE_MEL') {
+                updateDataABX(routeId);
+            } else if (routeId === 'TO_ABX') {
+                if (data['TO_ABX']) {
+                    displayDataInTable(data['TO_ABX'], monthPicker.value);
+                } else {
+                    fetchDataToABX();
+                }
+            }
+        }
+
+        function fetchDataToABX() {
+            // URLs for the three routes (BNE to ABX, MEL to ABX, SYD to ABX)
+            const urls = [
+                `https://abx-qantas-data.s3.ap-southeast-2.amazonaws.com/flight_data_BNE_to_ABX.json`,
+                `https://abx-qantas-data.s3.ap-southeast-2.amazonaws.com/flight_data_MEL_to_ABX.json`,
+                `https://abx-qantas-data.s3.ap-southeast-2.amazonaws.com/flight_data_SYD_to_ABX.json`
+            ];
+
+            Promise.all(urls.map(url => fetch(url).then(response => response.json())))
+                .then(dataArray => {
+                    // Merge data from the three routes into one dataset
+                    data['TO_ABX'] = [];
+                    dataArray.forEach(routeData => {
+                        data['TO_ABX'] = data['TO_ABX'].concat(routeData.data);
+                    });
+
+                    // Sort the merged data by date
+                    data['TO_ABX'].sort((a, b) => {
+                        const dateA = new Date(a.Date);
+                        const dateB = new Date(b.Date);
+                        return dateA - dateB;
+                    });
+
+                    displayDataInTable(data['TO_ABX'], monthPicker.value);
+                })
+                .catch(error => console.error('Error fetching data:', error));
+        }
+
+        function updateDataABX(routeId) {
+            const month = document.getElementById('monthPicker').value;
+            let url = `https://abx-qantas-data.s3.ap-southeast-2.amazonaws.com/flight_data_${routeId}.json`;
+
+            fetch(url)
+                .then(response => response.json())
+                .then(dataArray => {
+                    data[routeId] = dataArray.data;
+                    displayDataInTable(data[routeId], month);
+                })
+                .catch(error => console.error('Error fetching data:', error));
+        }
+
+        function displayDataInTable(data, selectedMonth) {
+            if (!Array.isArray(data)) {
+                console.error('Data format is not as expected');
+                return;
+            }
+
+            const filteredData = data.filter(item => item.Date.startsWith(selectedMonth));
+            const flightDataDiv = document.getElementById('flightData');
+            flightDataDiv.innerHTML = '';
+
+            const table = document.createElement('table');
+            table.className = 'table table-bordered';
+
+            const tableHead = document.createElement('thead');
+            tableHead.innerHTML = '<tr><th>Date</th><th>Origin Airport</th><th>Destination Airport</th><th>Points Cost</th></tr>';
+            table.appendChild(tableHead);
+
+            const tableBody = document.createElement('tbody');
+            filteredData.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td>${item.Date}</td><td>${item.Route.OriginAirport}</td><td>${item.Route.DestinationAirport}</td><td>${item.YMileageCost}</td>`;
+                tableBody.appendChild(row);
+            });
+
+            table.appendChild(tableBody);
+            flightDataDiv.appendChild(table);
+        }
+
+        function updateMonth() {
+            const activeTab = document.querySelector('#flightDataTabs .nav-link.active');
+            const selectedId = activeTab.getAttribute('data-id');
+            displayDataInTable(data[selectedId], monthPicker.value);
+        }
+    </script>
+<div class="container"><div class="footer"><p>Disclaimer: The data provided here may be inaccurate or out of date and serves only as a reference.<br>Contact james [at] jamesflores.net for any questions or feedback.</p>
+<a href="https://paypal.me/jamesflores" target="_blank">
+<img alt="Donate with PayPal" src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif"/>
+</a>
+</div></div>
+
+</body>
+</html>
