@@ -94,9 +94,9 @@
         function fetchDataToABX() {
             // URLs for the three routes (BNE to ABX, MEL to ABX, SYD to ABX)
             const urls = [
-                `https://abx-qantas-data.s3.ap-southeast-2.amazonaws.com/flight_data_BNE_to_ABX.json`,
-                `https://abx-qantas-data.s3.ap-southeast-2.amazonaws.com/flight_data_MEL_to_ABX.json`,
-                `https://abx-qantas-data.s3.ap-southeast-2.amazonaws.com/flight_data_SYD_to_ABX.json`
+                `https://d1r7am5p9krdc6.cloudfront.net/flight_data_BNE_to_ABX.json`,
+                `https://d1r7am5p9krdc6.cloudfront.net/flight_data_MEL_to_ABX.json`,
+                `https://d1r7am5p9krdc6.cloudfront.netflight_data_SYD_to_ABX.json`
             ];
 
             Promise.all(urls.map(url => fetch(url).then(response => response.json())))
