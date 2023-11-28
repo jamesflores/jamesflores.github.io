@@ -96,7 +96,7 @@
             const urls = [
                 `https://d1r7am5p9krdc6.cloudfront.net/flight_data_BNE_to_ABX.json`,
                 `https://d1r7am5p9krdc6.cloudfront.net/flight_data_MEL_to_ABX.json`,
-                `https://d1r7am5p9krdc6.cloudfront.netflight_data_SYD_to_ABX.json`
+                `https://d1r7am5p9krdc6.cloudfront.net/flight_data_SYD_to_ABX.json`
             ];
 
             Promise.all(urls.map(url => fetch(url).then(response => response.json())))
