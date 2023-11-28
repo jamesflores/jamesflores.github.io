@@ -121,7 +121,7 @@
 
         function updateDataABX(routeId) {
             const month = document.getElementById('monthPicker').value;
-            let url = `https://abx-qantas-data.s3.ap-southeast-2.amazonaws.com/flight_data_${routeId}.json`;
+            let url = `https://d1r7am5p9krdc6.cloudfront.net/flight_data_${routeId}.json`;
 
             fetch(url)
                 .then(response => response.json())
